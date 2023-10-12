@@ -1,0 +1,135 @@
+#Defaults
+# hostname is deprecated and replaced with domain. But if hostname exists then use it.
+domain: bigbang.dev
+
+enterprise: true
+
+istiod:
+  env: 
+    - name: ENABLE_LEGACY_FSGROUP_INJECTION
+      value: "false"
+# Change default hpaSpec to ensure generated HPA uses autoscaling/v2
+  hpaSpec:
+    metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 60
+tracing:
+  enabled:  true
+  address: 'tempo-tempo.tempo.svc'
+  sampling: 100
+  max_path_tag_length: 99999
+meshConfig:
+  accessLogFormat: |
+    [%START_TIME%] "%REQ(:METHOD)% %REQ(X-ENVOY-ORIGINAL-PATH?:PATH)% %PROTOCOL%" %RESPONSE_CODE% %RESPONSE_FLAGS% %RESPONSE_CODE_DETAILS% %CONNECTION_TERMINATION_DETAILS% "%UPSTREAM_TRANSPORT_FAILURE_REASON%" %BYTES_RECEIVED% %BYTES_SENT% %DURATION% %RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)% "%REQ(X-FORWARDED-FOR)%" "%REQ(USER-AGENT)%" "%REQ(X-REQUEST-ID)%" "%REQ(:AUTHORITY)%" "%UPSTREAM_HOST%" %UPSTREAM_CLUSTER% %UPSTREAM_LOCAL_ADDRESS% %DOWNSTREAM_LOCAL_ADDRESS% %DOWNSTREAM_REMOTE_ADDRESS% %REQUESTED_SERVER_NAME% %ROUTE_NAME% traceID=%REQ(x-b3-traceid)%
+
+imagePullSecrets:
+  - private-registry
+
+openshift: false
+
+authservice:
+  enabled: false
+
+monitoring:
+  enabled: true
+
+kiali:
+  enabled: true
+
+networkPolicies:
+  enabled: true
+  controlPlaneCidr: 0.0.0.0/0
+
+imagePullPolicy: IfNotPresent
+ingressGateways:
+  istio-ingressgateway:
+    enabled: false
+  
+  admin-ingressgateway:
+    k8s:
+      service:
+        type: LoadBalancer
+      serviceAnnotations:
+        service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+        service.beta.kubernetes.io/aws-load-balancer-internal: "false"
+  
+  tenant-ingressgateway:
+    k8s:
+      service:
+        type: LoadBalancer
+      serviceAnnotations:
+        service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+        service.beta.kubernetes.io/aws-load-balancer-internal: "false"
+gateways:
+  main: null
+  
+  admin:
+    selector:
+      app: admin-ingressgateway
+    autoHttpRedirect:
+      enabled: true
+    servers:
+    - hosts:
+        - '*.bigbang.dev'
+      port:
+        name: https
+        number: 8443
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: admin-cert
+        minProtocolVersion: TLSV1_3
+  
+  tenant:
+    selector:
+      app: tenant-ingressgateway
+    autoHttpRedirect:
+      enabled: true
+    servers:
+    - hosts:
+        - '*.bigbang.dev'
+      port:
+        name: https
+        number: 8443
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: tenant-cert
+        minProtocolVersion: TLSV1_3
+
+# Overlay
+authservice:
+  enabled: true
+istiod:
+  hpaSpec:
+    maxReplicas: 3
+    metrics:
+    - resource:
+        name: cpu
+        target:
+          averageUtilization: 80
+          type: Utilization
+      type: Resource
+    minReplicas: 1
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 1Gi
+meshConfig:
+  meshMTLS:
+    minProtocolVersion: TLSV1_3
+values:
+  global:
+    proxy:
+      resources:
+        limits:
+          memory: 1Gi
+        requests:
+          memory: 1Gi

@@ -1,0 +1,26 @@
+#Defaults
+createNamespace: false
+
+enterprise: true
+imagePullPolicy: IfNotPresent
+
+imagePullSecrets:
+  - private-registry
+
+networkPolicies:
+  enabled: true
+  controlPlaneCidr: 0.0.0.0/0
+monitoring:
+  enabled: true
+
+#Overlay
+operator:
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+

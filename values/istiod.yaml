@@ -1,0 +1,4 @@
+pilot:
+  image: "containers.istio.tetratelabs.com/pilot:1.18.2-tetrate-v0"
+
+defaultRevision: default

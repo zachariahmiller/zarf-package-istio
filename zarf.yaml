@@ -1,0 +1,82 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/zarf/main/zarf.schema.json
+kind: ZarfPackageConfig
+metadata:
+  name: istio
+  description: "UDS istio capability deployed without flux"
+  version: "0.0.1"
+  architecture: amd64
+
+variables:
+  - name: DOMAIN
+    default: "bigbang.dev"
+components:
+  - name: istio-ns
+    required: true
+    manifests:
+      - name: istio-ns
+        files:
+          - manifests/namespaces.yaml
+
+
+  - name: istio
+    required: true
+    description: "Deploy istio without flux"
+    charts:
+    - name: base
+      url: https://github.com/tetratelabs/helm-charts.git@1.19.1-tetrate-v0
+      version: 1.18.2
+      namespace: istio-system
+      gitPath: charts/istio-1.18.2-tetrate-v0/base 
+
+
+  - name: istiod
+    required: true
+    description: "Deploy istio without flux"
+    charts:
+    - name: istiod
+      url: https://github.com/tetratelabs/helm-charts.git@1.19.1-tetrate-v0
+      version: 1.18.2
+      namespace: istio-system
+      gitPath: charts/istio-1.18.2-tetrate-v0/istio-control/istio-discovery
+      valuesFiles: 
+        - values/istiod.yaml
+    images:
+      - containers.istio.tetratelabs.com/pilot:1.18.2-tetrate-v0
+    #- cgr.dev/chainguard/istio-pilot:latest
+
+  # - name: istio-tenant-gateway
+  #   required: true
+  #   description: "Deploy istio gateway without flux"
+  #   charts:
+  #   - name: gateway
+  #     url: https://github.com/tetratelabs/helm-charts.git@1.19.1-tetrate-v0
+  #     version: 1.18.2
+  #     namespace: istio-system
+  #     releaseName: istio-tenant-gateway
+  #     gitPath: charts/istio-1.18.2-tetrate-v0/gateway
+  #     valuesFiles: 
+  #       - values/istio-tenant-gateway.yaml
+  #   images:
+  #     - containers.istio.tetratelabs.com/proxyv2:1.18.2-tetrate-v0
+      #cgr.dev/chainguard/istio-proxy:latest
+
+
+  - name: istio-admin-gateway
+    required: true
+    description: "Deploy istio admin gateway without flux"
+    charts:
+    - name: gateway
+      url: https://github.com/tetratelabs/helm-charts.git@1.19.1-tetrate-v0
+      #non-tetrate https://github.com/istio/istio.git@1.19.3
+      version: 1.18.2
+      namespace: istio-system
+      releaseName: istio-admin-gateway
+      gitPath: charts/istio-1.18.2-tetrate-v0/gateway
+      valuesFiles: 
+        - values/istio-admin-gateway.yaml
+      # non-tetrate: manifests/charts/gateway
+    images:
+      - containers.istio.tetratelabs.com/proxyv2:1.18.2-tetrate-v0
+      #- docker.io/istio/proxyv2:1.18.2
+      #cgr.dev/chainguard/istio-proxy:latest
+
